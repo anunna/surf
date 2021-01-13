@@ -16,8 +16,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+<<<<<<<
 #include <unistd.h>
 
+=======
+#include <X11/X.h>
+#include <X11/Xatom.h>
+#include <gtk/gtk.h>
+#include <gtk/gtkx.h>
+#include <gdk/gdkx.h>
+>>>>>>>
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>
 #include <gdk/gdkx.h>
@@ -241,7 +249,15 @@ static void search(Client *c, const Arg *a);
 static void clicknavigate(Client *c, const Arg *a, WebKitHitTestResult *h);
 static void clicknewwindow(Client *c, const Arg *a, WebKitHitTestResult *h);
 static void clickexternplayer(Client *c, const Arg *a, WebKitHitTestResult *h);
+<<<<<<<
 
+=======
+static Display *dpy;
+static Atom atoms[AtomLast];
+static Client *clients = NULL;
+static Window embed = 0;
+static gboolean showxid = FALSE;
+>>>>>>>
 static char winid[64];
 static char togglestats[12];
 static char pagestats[2];
@@ -641,9 +657,15 @@ getatom(Client *c, int a)
 	unsigned long ldummy;
 	unsigned char *p = NULL;
 
+<<<<<<<
 	XSync(dpy, False);
 	XGetWindowProperty(dpy, c->xid, atoms[a], 0L, BUFSIZ, False, XA_STRING,
 	                   &adummy, &idummy, &ldummy, &ldummy, &p);
+=======
+	XGetWindowProperty(dpy, GDK_WINDOW_XID(gtk_widget_get_window(GTK_WIDGET(c->win))),
+			atoms[a], 0L, BUFSIZ, False, XA_STRING,
+			&adummy, &idummy, &ldummy, &ldummy, &p);
+>>>>>>>
 	if (p)
 		strncpy(buf, (char *)p, LENGTH(buf) - 1);
 	else
@@ -890,7 +912,16 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
 		return; /* do not update */
 	default:
 		return; /* do nothing */
+<<<<<<<
 	}
+=======
+	WebKitWebFrame *frame;
+	GdkGeometry hints = { 1, 1 };
+	GdkScreen *screen;
+	GdkWindow *window;
+	gdouble dpi;
+	char *ua;
+>>>>>>>
 
 	updatetitle(c);
 	if (refresh)
@@ -907,6 +938,16 @@ getcert(const char *uri)
 		    !regexec(&(certs[i].re), uri, 0, NULL, 0))
 			return certs[i].file;
 	}
+<<<<<<<
+=======
+
+	gtk_widget_realize(GTK_WIDGET(c->win));
+	window = gtk_widget_get_window(GTK_WIDGET(c->win));
+
+	gtk_window_set_default_size(GTK_WINDOW(c->win), 800, 600);
+	g_signal_connect(G_OBJECT(c->win),
+	                 "destroy",
+>>>>>>>
 
 	return NULL;
 }
@@ -934,9 +975,20 @@ setcert(Client *c, const char *uri)
 		g_free(host);
 	}
 
+<<<<<<<
 	g_object_unref(cert);
+=======
+	/* Pane */
+	c->pane = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+>>>>>>>
 
+<<<<<<<
 }
+=======
+	/* VBox */
+	c->vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_paned_pack1(GTK_PANED(c->pane), c->vbox, TRUE, TRUE);
+>>>>>>>
 
 const char *
 getstyle(const char *uri)
@@ -996,9 +1048,18 @@ evalscript(Client *c, const char *jsstr, ...)
 	script = g_strdup_vprintf(jsstr, ap);
 	va_end(ap);
 
+<<<<<<<
 	webkit_web_view_run_javascript(c->view, script, NULL, NULL, NULL);
 	g_free(script);
 }
+=======
+	gtk_widget_show(c->win);
+	gtk_window_set_geometry_hints(GTK_WINDOW(c->win), NULL, &hints,
+	                              GDK_HINT_MIN_SIZE);
+	gdk_window_set_events(window, GDK_ALL_EVENTS_MASK);
+	gdk_window_add_filter(window, processx, c);
+	webkit_web_view_set_full_content_zoom(c->view, TRUE);
+>>>>>>>
 
 void
 updatewinid(Client *c)
@@ -1093,6 +1154,14 @@ destroyclient(Client *c)
 	/* Not needed, has already been called
 	gtk_widget_destroy(c->win);
 	 */
+<<<<<<<
+=======
+	if (zoomto96dpi) {
+		screen = gdk_window_get_screen(window);
+		dpi = gdk_screen_get_resolution(screen);
+		if (dpi != -1) {
+			g_object_set(G_OBJECT(settings),
+>>>>>>>
 
 	for (p = clients; p && p->next != c; p = p->next)
 		;
@@ -1428,9 +1497,34 @@ showview(WebKitWebView *v, Client *c)
 	updatewinid(c);
 	if (showxid) {
 		gdk_display_sync(gtk_widget_get_display(c->win));
+<<<<<<<
+=======
+		printf("%u\n",
+		       (guint)GDK_WINDOW_XID(window));
+		fflush(NULL);
+		if (fclose(stdout) != 0)
+			die("Error closing stdout");
+>>>>>>>
+<<<<<<<
 		puts(winid);
+=======
+setatom(Client *c, int a, const char *v)
+{
+	XSync(dpy, False);
+	XChangeProperty(dpy, GDK_WINDOW_XID(gtk_widget_get_window(GTK_WIDGET(c->win))),
+	                atoms[a], XA_STRING, 8, PropModeReplace,
+	                (unsigned char *)v, strlen(v) + 1);
+}
+>>>>>>>
+<<<<<<<
 		fflush(stdout);
 	}
+=======
+		die("Can't install SIGHUP handler");
+	gtk_init(NULL, NULL);
+
+	dpy = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+>>>>>>>
 
 	if (curconfig[HideBackground].val.i)
 		webkit_web_view_set_background_color(c->view, &bgcolor);
@@ -1659,6 +1753,13 @@ decidepolicy(WebKitWebView *v, WebKitPolicyDecision *d,
 		break;
 	}
 	return TRUE;
+<<<<<<<
+=======
+updatewinid(Client *c)
+{
+	snprintf(winid, LENGTH(winid), "%u",
+	         (int)GDK_WINDOW_XID(gtk_widget_get_window(GTK_WIDGET(c->win))));
+>>>>>>>
 }
 
 void

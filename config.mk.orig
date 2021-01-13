@@ -1,12 +1,7 @@
 # surf version
 VERSION = 2.0
 
-<<<<<<<
 # Customize below to fit your system
-=======
-GTKINC = `pkg-config --cflags gtk+-3.0 webkitgtk-3.0`
-GTKLIB = `pkg-config --libs gtk+-3.0 webkitgtk-3.0`
->>>>>>>
 
 # paths
 PREFIX = /usr/local
